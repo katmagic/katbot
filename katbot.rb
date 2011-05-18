@@ -2,7 +2,6 @@
 require 'cinch'
 require 'yaml'
 
-
 def load_plugins
 	plugin_dir = File.dirname(__FILE__)
 
