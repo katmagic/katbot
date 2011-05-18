@@ -26,15 +26,15 @@ module Cinch::Plugins
 
 		private
 
-		# Fetch the title of a URI, raising TypeError if the URL does not point to an
-		# HTML document, or SocketError if the host can't be found.
+		# Fetch the title of a URI, raising TypeError if the URL does not point to
+		# an HTML document, or SocketError if the host can't be found.
 		def get_title(uri)
-			con = Net::HTTP.new(uri.host, uri.port)
-			con.use_ssl = (uri.scheme == 'https')
+			c = Net::HTTP.new(uri.host, uri.port)
+			c.use_ssl = (uri.scheme == 'https')
 
-			raise TypeError unless con.head(uri.request_uri).content_type == 'text/html'
+			raise TypeError unless c.head(uri.request_uri).content_type == 'text/html'
 
-			if title = Nokogiri.parse( con.get(uri.request_uri).body ).xpath('//title')
+			if title = Nokogiri.parse( c.get(uri.request_uri).body ).xpath('//title')
 				return title.text
 			else
 				return nil
