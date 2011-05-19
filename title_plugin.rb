@@ -35,7 +35,7 @@ module Cinch::Plugins
 			raise TypeError unless c.head(uri.request_uri).content_type == 'text/html'
 
 			if title = Nokogiri.parse( c.get(uri.request_uri).body ).xpath('//title')
-				return title.text
+				return title.text.gsub(/\s+/, ' ').strip()
 			else
 				return nil
 			end
