@@ -20,8 +20,8 @@ module Cinch::Plugins
 		def assault(m, victim)
 			assault_method = ASSAULT_METHODS[ rand(ASSAULT_METHODS.length) ]
 			animal = ANIMALS[ rand(ANIMALS.length) ]
-			a_or_an = (animal =~ /aeiou/i) ? 'an' : 'a'
-			m.channel.action("#{assault_method} #{victim} with #{a_or_an} #{animal}.")
+			an = (animal =~ /aeiou/i) ? 'an' : 'a'
+			m.channel.safe_action("#{assault_method} #{victim} with #{an} #{animal}.")
 		end
 	end
 end

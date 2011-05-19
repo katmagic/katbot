@@ -16,9 +16,9 @@ module Cinch::Plugins
 
 				begin
 					title = get_title(uri)
-					msg.reply("#{uri}: #{title}")
+					msg.safe_reply("#{uri}: #{title}")
 				rescue SocketError
-					msg.reply("#{uri.host} doesn't seem to be up.")
+					msg.safe_reply("#{uri.host} doesn't seem to be up.")
 				rescue TypeError
 				end
 			end
