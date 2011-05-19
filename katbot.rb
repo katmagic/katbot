@@ -34,6 +34,10 @@ bot_threads = conf.map do |servname, sc|
 			load_plugins()
 			m.reply("Reloaded.")
 		end
+
+		on :invite do |m|
+			m.channel.join()
+		end
 	end
 
 	Thread.new do
