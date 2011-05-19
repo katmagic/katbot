@@ -20,7 +20,7 @@ def simple_parse_feed(feed_url)
 	res.define_singleton_method(:title){ feed.title && feed.title.content }
 	feed.items.each do |a|
 		continue if not (a.title and a.title.content and a.link and a.link.href)
-		
+
 		res[a.title.content] = a.link.href
 		date = a.updated.content
 		a.link.href.define_singleton_method(:date){ date }
