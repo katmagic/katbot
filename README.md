@@ -23,3 +23,23 @@ should explain.
     channels:
     - "#test-katbot2"
 
+Plugins can also have options. Plugin options can be local or global, with local
+options taking precedence. *If a local option is specified that overrides a
+global option, their results will not be merged.* In the example below, for
+instance, Carol *would not* be in Assault's dont_attack configuration option.
+
+  ---
+  "irc.example.com":
+    nick: katbot
+    channels:
+      - "#blah"
+    _plugins:
+      Assault:
+        dont_attack:
+          - Alice
+          - Bob
+
+  _plugins:
+    Assault:
+      dont_attack:
+        - Carol
