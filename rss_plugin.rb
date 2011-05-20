@@ -80,6 +80,7 @@ module Cinch::Plugins
 						begin
 							query_feed(feed)
 						rescue Exception => ex
+							bot.logger.log("Error querying #{feed}!")
 							bot.logger.log_exception(ex)
 						end
 						sleep(config['update_interval'])
