@@ -15,9 +15,14 @@ module Cinch::Plugins
 
 		include Cinch::Plugin
 
-		match /assault (\S+)/, method: :assault
+		match /assault (.*)/, method: :assault
 
 		def assault(m, victim)
+			if not m.channel.has_user?(victim)
+				m.safe_reply("I couldn't seem to find #{victim}.")
+				return
+			end
+
 			assault_method = ASSAULT_METHODS[ rand(ASSAULT_METHODS.length) ]
 			animal = ANIMALS[ rand(ANIMALS.length) ]
 			an = (animal =~ /^[aeiou]/i) ? 'an' : 'a'
