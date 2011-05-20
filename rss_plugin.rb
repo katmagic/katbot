@@ -77,7 +77,11 @@ module Cinch::Plugins
 
 				Thread.start do
 					while true
-						query_feed(feed)
+						begin
+							query_feed(feed)
+						rescue Exception => ex
+							bot.logger.log_exception(ex)
+						end
 						sleep(config['update_interval'])
 					end
 				end
