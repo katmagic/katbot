@@ -17,7 +17,7 @@ conf = YAML.load_file( ARGV[0] || File.join(ENV['HOME']||'.', '.katbot.yml') )
 bot_threads = conf.map do |servname, sc|
 	# This is reserved for the configuration of plugins.
 	if servname == '_plugins'
-		continue
+		next
 	# This allows a server that's literally named '_plugins'. I don't know why
 	# anyone would fuck with their DNS in this way, but it's there if you need it.
 	elsif servname =~ /^_(_+plugins)$/
@@ -43,6 +43,7 @@ bot_threads = conf.map do |servname, sc|
 					opts.update(conf['_plugins'][p.to_s]) rescue nil
 					opts.update(sc['_plugins'][p.to_s]) rescue nil
 				end
+
 				plugin
 			}
 		end
