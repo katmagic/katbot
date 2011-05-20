@@ -2,6 +2,7 @@
 require 'rss'
 require 'open-uri'
 require 'cinch'
+require_relative 'bitly/bitly'
 
 # Parse a feed into a Hash, which will have a singleton attribute .title
 # containing the title of the feed. Its keys will be article titles, and its
@@ -34,12 +35,34 @@ module Cinch::Plugins
 			# feed was started. This is only used at startup.
 			'stagger_interval' => 47, # 0m47s
 
+			# This is information about your bit.ly account.
+#			'bitly' => {
+#				'username' => 'katmagic',
+#				'api_key' => 'R_0da49e0a9118ff35f52f629d2d71bf07'
+#			},
+
 			'feeds' => []
 		}
 
 		def initialize(*a)
 			super
+
+			if config['bitly']
+				@bit = BitLy.new(
+					config['bitly']['username'],
+					config['bitly']['api_key']
+				)
+			end
+
 			Thread.start(&method(:start_queries))
+		end
+
+		# Shorten a URL only if it is longer than 30 characters, and if we have a
+		# bit.ly account configured.
+		def shorten(url)
+			return url unless @bit
+			return url if url.length < 30
+			return @bit.ly(url)
 		end
 
 		private
@@ -80,7 +103,7 @@ module Cinch::Plugins
 				end
 
 				bot.channels.each do |chan|
-					chan.safe_msg("#{title} - #{url} (via #{articles.title})")
+					chan.safe_msg("#{title} - #{shorten(url)} (via #{articles.title})")
 				end
 			end
 
