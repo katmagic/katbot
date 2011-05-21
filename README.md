@@ -10,18 +10,21 @@ Configuration
 KatBot's configuration file is stored in `~/.katbot.yml`. The following example
 should explain.
 
-  ---
-  "irc.example.com":
-    nick: katbot
-    ssl: true
-    channels:
-    - "#test-katbot"
+	---
+	"irc.example.com":
+		nick: katbot
+		ssl: true
+		channels:
+		- "#test-katbot"
 
-  "irc.example.org":
-    nick: katbot
-    ssl: true
-    channels:
-    - "#test-katbot2"
+	"irc.example.org":
+		nick: katbot
+		ssl: true
+		channels:
+		- "#test-katbot2"
+
+Plugins
+-------
 
 Plugins can also have options. Plugin options can be local or global, with local
 options taking precedence. *If a local option is specified that overrides a
@@ -44,15 +47,14 @@ instance, Carol *would not* be in Assault's dont_attack configuration option.
 	    dont_attack:
 	      - Carol
 
-Plugin-Specific Options
------------------------
+### Plugin-Specific Options ###
 
-### Assault Plugin ###
+#### Assault Plugin ####
 
 - `dont_attack` - This is a list of nicknames that the bot will refuse to
 attack. _(Default: `['katmagic']`)_
 
-### RSS Plugin ###
+#### RSS Plugin ####
 
 - `update_interval` - Each feed begins a new update this many seconds _after_
 that same feed was fetched the last time. _(Default: `283` (13m7s))_
