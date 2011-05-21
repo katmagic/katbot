@@ -18,13 +18,15 @@ bot_threads = conf.map do |servname, sc|
 	# This is reserved for the configuration of plugins.
 	if servname == '_plugins'
 		next
+	elsif sc['disabled']
+		next
 	# This allows a server that's literally named '_plugins'. I don't know why
 	# anyone would fuck with their DNS in this way, but it's there if you need it.
 	elsif servname =~ /^_(_+plugins)$/
 		servname = $1
 	end
 
-	bot = Cinch::Bot.new do
+	bot = Cinch::Bot.new do |b|
 		configure do |c|
 			c.nick = sc['nick']
 			c.user = sc['user'] || sc['nick']
@@ -37,15 +39,26 @@ bot_threads = conf.map do |servname, sc|
 
 			c.plugins.plugins = Cinch::Plugins.constants.map{ |p|
 				plugin = Cinch::Plugins.const_get(p)
+
 				# Set our configuration options.
-				c.plugins.options[plugin] = {}.tap do |opts|
-					opts.update(plugin::DEFAULT_CONF) rescue nil
-					opts.update(conf['_plugins'][p.to_s]) rescue nil
-					opts.update(sc['_plugins'][p.to_s]) rescue nil
+				opts = Hash.new
+				opts.update(plugin::DEFAULT_CONF) rescue nil
+				opts.update(conf['_plugins'][p.to_s]) rescue nil
+				opts.update(sc['_plugins'][p.to_s]) rescue nil
+
+				# Don't load us if we've been disabled.
+				if opts['disabled']
+					b.debug("Not loading disabled plugin '#{p}'.")
+					next
+				else
+					b.debug("Loading plugin '#{p}'.")
 				end
 
+				# Save our configuration options.
+				c.plugins.options[plugin] = opts
+
 				plugin
-			}
+			}.reject(&:nil?)
 		end
 
 		on :message, '!reload' do |m|
@@ -62,6 +75,8 @@ bot_threads = conf.map do |servname, sc|
 		bot.start()
 	end
 end
+# Don't access disabled accounts.
+bot_threads.reject!(&:nil?)
 
 bot_threads.each do |thread|
 	thread.join()

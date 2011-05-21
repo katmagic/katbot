@@ -18,6 +18,7 @@ should explain.
 		- "#test-katbot"
 
 	"irc.example.org":
+		disabled: false
 		nick: katbot
 		ssl: true
 		channels:
@@ -46,6 +47,9 @@ instance, Carol *would not* be in Assault's dont_attack configuration option.
 	  Assault:
 	    dont_attack:
 	      - Carol
+
+All plugins can take an option `disabled`, which will (surprise!) disable that
+plugin.
 
 ### Plugin-Specific Options ###
 
