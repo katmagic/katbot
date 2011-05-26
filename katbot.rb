@@ -33,9 +33,16 @@ bot_threads = conf.map do |servname, sc|
 			c.real_name = sc['real_name'] || sc['nick']
 			c.channels = sc['channels']
 			c.server = servname
-			c.ssl = sc['ssl']
+			c.port = sc['port']
 
-			c.port = sc['port'] || (sc['ssl'] ? 6697 : 6667)
+			if sc['ssl']
+				c.ssl.use = true
+				c.ssl.verify = true
+				c.port ||= 6697
+			else
+				b.debug("WARNING: not using SSL for #{c.nick}@#{c.server}")
+				c.port ||= 6667
+			end
 
 			c.plugins.plugins = Cinch::Plugins.constants.map{ |p|
 				plugin = Cinch::Plugins.const_get(p)
