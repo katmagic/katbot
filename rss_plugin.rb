@@ -174,9 +174,6 @@ module Cinch::Plugins
 					feed['channels'].each do |c|
 						c.safe_msg("#{article.title} - #{short} (via #{feed_title})")
 					end
-
-				else
-					bot.debug("Article #{article.title} in #{feed['url']} is old (from #{article.date}).")
 				end
 			end
 
