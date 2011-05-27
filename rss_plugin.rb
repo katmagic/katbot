@@ -4,23 +4,6 @@ require 'open-uri'
 require 'cinch'
 require_relative 'bitly/bitly'
 
-# Parse a feed into a Hash, which will have a singleton attribute .title
-# containing the title of the feed. Its keys will be article titles, and its
-# values will be Strings containing the link corresponding to that title.
-# Each String has a singleton attribute .date containing the date it was
-# last updated.
-def simple_parse_feed(feed_url)
-	feed = RSS::Parser.parse(open(feed_url).read(), false)
-
-	res = Hash.new
-	res.define_singleton_method(:title){ feed.channel.title rescue feed.title }
-	feed.items.each do |a|
-		res[a.title] = a.link
-		res[a.title].define_singleton_method(:date){ a.date }
-	end
-	res
-end
-
 module Cinch::Plugins
 	class RSS
 		include Cinch::Plugin
@@ -47,15 +30,10 @@ module Cinch::Plugins
 		def initialize(*a)
 			super
 
-			if config['bitly']
-				@bit = BitLy.new(
-					config['bitly']['username'],
-					config['bitly']['api_key']
-				)
-			end
-
-			Thread.start(&method(:start_queries))
+			@threads = Hash.new
 		end
+		
+		listen_to :connect, method: :reload
 
 		# Shorten a URL only if it is longer than 30 characters, and if we have a
 		# bit.ly account configured.
@@ -65,56 +43,144 @@ module Cinch::Plugins
 			return @bit.ly(url)
 		end
 
-		private
+		# Call auto_terminating_feed_loop() for every feed in our configuration.
+		def reload(ev=nil)
+			if config['bitly']
+				@bit = BitLy.new(
+					config['bitly']['username'],
+					config['bitly']['api_key']
+				)
+			else
+				@bit = nil
+			end
 
-		# Launch new threads to query feeds. This method itself should be run in a
-		# new thread.
-		def start_queries()
-			@updated_at = Hash.new
-
-			config['feeds'].each do |feed|
-				@updated_at[feed] = (Time.now - 900)
-
-				Thread.start do
-					while true
-						begin
-							query_feed(feed)
-						rescue Exception => ex
-							bot.logger.log("Error querying #{feed}!")
-							bot.logger.log_exception(ex)
-						end
-						sleep(config['update_interval'])
+			Thread.new do
+				config['feeds'].each do |f|
+					if f.is_a?(String)
+						unique_auto_terminating_feed_loop(f)
+					else
+						unique_auto_terminating_feed_loop(f['url'])
 					end
-				end
 
-				sleep(config['stagger_interval'])
+					sleep(config['stagger_interval'])
+				end
 			end
 		end
 
-		# Tell all the channels we're in about the new things we learned from feed.
-		def query_feed(feed)
-			bot.debug("Querying #{feed}...")
+		private
 
-			new_i = 0
-			articles = simple_parse_feed(feed)
-			articles.each do |title, url|
-				if not(url.date)
-					bot.debug("#{title.inspect} in #{feed} has no date! Ignoring...")
-					next
-				elsif url.date > @updated_at[feed]
-					new_i += 1
-				else
-					next
+		# Start a loop that fetches a feed so long as it remains in our
+		# configuration, with whatever options are determined in our configuration
+		# at that time. If there's already a loop fetching this feed, do nothing.
+		# This method executes in a new Thread.
+		def unique_auto_terminating_feed_loop(feed)
+			if @threads[feed] and @threads[feed].alive?
+				bot.debug("Not starting another fetch thread for #{feed}.")
+				return
+			else
+				@threads[feed] = Thread.new do
+					bot.debug("Starting fetch thread for #{feed}.")
+
+					last_fetched = Time.now
+
+					while feed_info = get_feed(feed)
+						fetch_feed(feed_info, last_fetched)
+						last_fetched = Time.now
+						sleep(feed_info['update_interval'])
+					end
+
+					bot.debug("Stopping updates of #{feed}.")
 				end
+			end
+		end
 
-				bot.channels.each do |chan|
-					chan.safe_msg("#{title} - #{shorten(url)} (via #{articles.title})")
+		# Get a Hash with the following keys:
+		#   - url: the URL of the feed
+		#   - update_interval: how often the feed should be updated
+		#   - shorten_urls: whether we should shorten URLs
+		#   - name: the name of the feed that should be displayed in a chat
+		#   - channels: a list of channels we should tell about this feed.
+		def get_feed(feed)
+			feed = config['feeds'].find{ |f|
+				f.is_a?(String) ? (f == feed) : (f['url'] == feed)
+			}
+			return if not feed
+			
+			if feed.is_a?(String)
+				feed = {'url' => feed}
+			else
+				feed = feed.clone
+			end
+
+			if feed['channels']
+				feed['channels'] = feed['channels'].map{|_|Channel.new(_)}
+			else
+				feed['channels'] = bot.channels
+			end
+
+			feed['update_interval'] ||= config['update_interval']
+			feed['shorten_urls'] ||= !config['bitly'].nil?
+
+			feed
+		end
+
+		# Fetches a feed and tell all our channels about it. feed is a result from
+		# get_feed(), last_fetched is the time when the feed was last fetched. Only
+		# articles than last_fetched will be displayed.
+		def fetch_feed(feed, last_fetched)
+			bot.debug("Querying #{feed['url']}...")
+
+			begin
+				rss = ::RSS::Parser.parse(open(feed['url']).read(), false)
+			rescue SocketError
+				bot.debug("We encountered an error fetching #{feed['url']}. Aborting.")
+				return
+			rescue ::RSS::NotWellFormedError
+				bot.debug("We encountered an error parsing #{feed['url']}. Aborting.")
+				return
+			end
+		
+			feed_title = (
+				feed['name'] or
+				(rss.channel and rss.channel.title) or
+				rss.title
+			)
+
+			unless feed_title
+				bot.debug("#{feed['url']} has no title. Ignoring.")
+				return
+			end
+
+			rss.items.each do |article|
+				if not article.date
+					bot.debug("Article #{article.title} has no date. Ignoring.")
+					next
+
+				elsif not article.title
+					bot.debug("Article in #{feed['url']} has no title. Ignoring.")
+					next
+
+				elsif article.date > last_fetched
+					bot.debug("Article #{article.title} in #{feed['url']} is new!")
+
+					begin
+						short = shorten(article.link)
+						bot.debug("Shortened URL #{article.link} to #{short}.")
+					rescue
+						bot.debug("Error shortening URL #{article.link}. Continuing.")
+						short = article.link
+					end
+
+					feed['channels'].each do |c|
+						c.safe_msg("#{article.title} - #{short} (via #{feed_title})")
+					end
+
+				else
+					bot.debug("Article #{article.title} in #{feed['url']} is old (from #{article.date}).")
 				end
 			end
 
-			@updated_at[feed] = Time.now
-
-			bot.debug("#{new_i}/#{articles.length} new in #{articles.title}.")
+			bot.debug("Updated #{feed['url']}.")
 		end
 	end
 end
