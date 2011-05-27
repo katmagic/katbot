@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
+require 'bundler/setup'
 require 'rss'
 require 'open-uri'
 require 'cinch'
-require_relative 'bitly/bitly'
+require 'bitly'
 
 module Cinch::Plugins
 	class RSS

@@ -1,0 +1,23 @@
+GIT
+  remote: git://github.com/cinchrb/cinch.git
+  revision: 397d468fb7574a07f9008bfae1e12f736eeb9927
+  specs:
+    cinch (1.1.3)
+
+GIT
+  remote: git://github.com/katmagic/ruby-bitly.git
+  revision: d443cf2612f94306544cb2ecc576eace42ca1580
+  specs:
+    bitly (0.0.3)
+
+GEM
+  specs:
+    nokogiri (1.4.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bitly!
+  cinch!
+  nokogiri

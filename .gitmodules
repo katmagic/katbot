@@ -1,3 +1,0 @@
-[submodule "bitly"]
-	path = bitly
-	url = git://github.com/hermit/ruby-bitly.git
