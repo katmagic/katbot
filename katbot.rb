@@ -5,6 +5,9 @@ require 'yaml'
 
 Thread.abort_on_exception = true
 
+module Cinch::Plugins
+end
+
 def load_plugins()
 	plugin_dir = File.dirname(__FILE__)
 
