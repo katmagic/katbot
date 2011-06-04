@@ -11,6 +11,7 @@ GIT
     bitly (0.0.3)
 
 GEM
+  remote: https://rubygems.org/
   specs:
     nokogiri (1.4.4)
 
