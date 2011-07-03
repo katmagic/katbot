@@ -7,7 +7,12 @@ class Cinch::Plugins::Title
 
 	def listen(msg)
 		URI.extract(msg.message).each do |uri|
-			uri = URI.parse(uri)
+			begin
+				uri = URI.parse(uri)
+			rescue URI::InvalidURIError
+				# Apparently URI.extract will occasionally extract invalid URIs.
+				next
+			end
 			bot.debug("Getting title of #{uri}")
 
 			begin
