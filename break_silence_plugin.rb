@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 class QuotesDB
 	# If quotes_file is improperly formatted, our behavior is undefined (and
 	# erratic).

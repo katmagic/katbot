@@ -1,16 +1,13 @@
-#!/usr/bin/env ruby
 # This is a rather silly script that will assault people on command.
 # It takes one option, 'dont_attack', which is an Array of nicknames not to
 # assault.
-require 'bundler/setup'
-require 'cinch'
 
 LOCAL_DIR = File.absolute_path( File.dirname(__FILE__) )
 def LOCAL_DIR.+(file)
 	File.join(self, file)
 end
 
-class Assault
+class Cinch::Plugins::Assault
 	ANIMALS = open(LOCAL_DIR + 'animals.txt').lines.map(&:strip)
 	ASSAULT_METHODS = open(LOCAL_DIR + 'assault_methods.txt').lines.map(&:strip)
 

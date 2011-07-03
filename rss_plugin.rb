@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
 require 'bundler/setup'
 require 'rss'
 require 'open-uri'
-require 'cinch'
 require 'bitly'
 
-class RSS
+class Cinch::Plugins::RSS
 	include Cinch::Plugin
 
 	DEFAULT_CONF = {
