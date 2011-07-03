@@ -43,7 +43,7 @@ bot_threads = conf.map do |servname, sc|
 
 			if sc['ssl']
 				c.ssl.use = true
-				c.ssl.verify = true
+				c.ssl.verify = (sc['verify_ssl'] != false)
 				c.port ||= 6697
 			else
 				b.debug("WARNING: not using SSL for #{c.nick}@#{c.server}")
